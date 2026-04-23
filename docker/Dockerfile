@@ -72,5 +72,5 @@ RUN sudo chsh -s $(which zsh) ${UNAME}
 ENV SHELL=/usr/bin/zsh
 SHELL ["/bin/zsh", "-lc"]
 
-WORKDIR /home/${UNAME}/ros_ws
+WORKDIR /home/${UNAME}/p03_ws
 CMD ["/bin/zsh", "-i"]

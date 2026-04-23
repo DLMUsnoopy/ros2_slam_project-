@@ -1,0 +1,5 @@
+services:
+  simulation:
+    environment:
+      - DISPLAY=${DISPLAY}
+      - LIBGL_ALWAYS_INDIRECT=0

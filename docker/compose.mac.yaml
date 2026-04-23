@@ -1,0 +1,18 @@
+services:
+  simulation:
+    image: moro_jazzy_mac_image
+    container_name: simulation
+    build:
+      context: .
+      dockerfile: Dockerfile.mac
+    stdin_open: true
+    tty: true
+    restart: "no"
+    network_mode: host
+    privileged: true
+    volumes:
+      - ./docker_zsh_history.txt:/home/dev/.zsh_history
+      - ./zsh.rc:/home/dev/.zshrc
+      - ../:/home/dev/p03_ws
+    environment:
+      - DISPLAY=host.docker.internal:0

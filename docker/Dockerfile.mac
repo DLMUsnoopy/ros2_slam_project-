@@ -1,0 +1,83 @@
+cat > Dockerfile.mac << 'EOF'
+# Dockerfile.mac
+# For Apple Silicon (M1/M2/M3/M4) Macs — builds natively for arm64
+# This avoids Rosetta emulation for ROS2 nodes.
+# Note: Gazebo GUI will still be slow (no GPU access in Docker on Mac)
+# CUDA-dependent nodes (CV stack, tracking) are NOT available on this platform
+
+FROM arm64v8/ros:jazzy-desktop-full
+
+ENV ROS_DISTRO=jazzy
+
+RUN userdel -r ubuntu 2>/dev/null || true
+
+RUN apt-get update && apt-get upgrade -y \
+  && apt-get install --no-install-recommends -y \
+  zsh \
+  git \
+  python3-pip \
+  python3-dev \
+  python3-setuptools \
+  python-is-python3 \
+  tmux \
+  sudo \
+  curl \
+  wget \
+  build-essential \
+  tree \
+  openssh-client \
+  software-properties-common \
+  ninja-build \
+  gettext \
+  unzip \
+  libgmp-dev \
+  libmpfr-dev \
+  libmpc-dev \
+  libisl-dev \
+  zlib1g-dev \
+  file \
+  cmake \
+  libssl-dev \
+  ros-${ROS_DISTRO}-rosbag2-storage-mcap \
+  ros-${ROS_DISTRO}-rosbag2 \
+  ros-${ROS_DISTRO}-rmw-zenoh-cpp \
+  ros-${ROS_DISTRO}-rviz2 \
+  ros-${ROS_DISTRO}-plotjuggler-ros \
+  libeigen3-dev \
+  libtbb-dev \
+  clang \
+  libclang-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /tmp
+
+ARG UID=1000
+ARG GID=1000
+ENV UNAME=dev
+
+RUN addgroup --gid $GID $UNAME \
+  && adduser --disabled-password --gecos '' --uid $UID --gid $GID $UNAME \
+  && adduser $UNAME sudo \
+  && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+  && sed -i 's/required/sufficient/' /etc/pam.d/chsh \
+  && touch /home/$UNAME/.sudo_as_admin_successful
+
+WORKDIR /home/${UNAME}/
+ENV HOME=/home/${UNAME}
+USER ${UNAME}
+ENV PATH="${PATH}:${HOME}/.local/bin"
+
+RUN sudo sh -c "$(curl -L https://raw.githubusercontent.com/balancedscorpion/zsh-in-docker/new_user/zsh-in-docker.sh)" -- \
+  -u ${UNAME} \
+  -x \
+  -p git -p z -p sudo -p history -p copybuffer -p copypath -p copyfile \
+  -p https://github.com/zsh-users/zsh-autosuggestions \
+  -p https://github.com/zsh-users/zsh-completions
+
+RUN sudo chsh -s $(which zsh) ${UNAME}
+ENV SHELL=/usr/bin/zsh
+SHELL ["/bin/zsh", "-lc"]
+
+WORKDIR /home/${UNAME}/p03_ws
+CMD ["/bin/zsh", "-i"]
+EOF

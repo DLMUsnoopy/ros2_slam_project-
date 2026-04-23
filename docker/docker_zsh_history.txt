@@ -1,0 +1,39 @@
+: 1776764898:0;colcon build
+: 1776764904:0;source install/setup.bash
+: 1776764908:0;ls
+: 1776764919:0;cd install
+: 1776764921:0;ls
+: 1776764926:0;cd ..
+: 1776764932:0;source install/setup.bash
+: 1776764965:0;rm -rf build/ install/ log/\
+colcon build
+: 1776764981:0;source install/setup.bash
+: 1776764983:0;ls
+: 1776765011:0;source install/setup.zsh
+: 1776765024:0;ros2 launch ipb_ros2_sim all.launch.py
+: 1776765171:0;source install/setup.zsh
+: 1776765245:0;ros2 run rmw_zenoh_cpp rmw_zenohd &
+: 1776765341:0;ros2 run rmw_zenoh_cpp rmw_zenohd
+: 1776765372:0;export RMW_IMPLEMENTATION=rmw_zenoh_cpp\
+ros2 launch ipb_ros2_sim all.launch.py
+: 1776765438:0;[200~cat ~/p03_ws/install/ipb_ros2_sim/share/ipb_ros2_sim/world/empty_world/empty.world~
+: 1776765453:0;cat /install/ipb_ros2_sim/share/ipb_ros2_sim/world/empty_world/empty.world~
+: 1776765455:0;ls
+: 1776765466:0;cat install/ipb_ros2_sim/share/ipb_ros2_sim/world/empty_world/empty.world~
+: 1776765483:0;cd install/ipb_ros2_sim/share/ipb_ros2_sim/world
+: 1776765484:0;ls
+: 1776765486:0;cd empty_world
+: 1776765487:0;ls
+: 1776765507:0;cd 
+: 1776765508:0;exit
+: 1776765622:0;export RMW_IMPLEMENTATION=rmw_zenoh_cpp\
+ros2 launch ipb_ros2_sim all.launch.py
+: 1776765642:0;ros2 run rmw_zenoh_cpp rmw_zenohd &
+: 1776765657:0;cd ../../..
+: 1776765662:0;cd ..
+: 1776765669:0;cd ../../..
+: 1776765672:0;cd p03_ws
+: 1776765686:0;colcon build
+: 1776765700:0;export RMW_IMPLEMENTATION=rmw_zenoh_cpp\
+ros2 launch ipb_ros2_sim all.launch.py
+: 1776765922:0;exit

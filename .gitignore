@@ -1,27 +1,18 @@
-# ROS 2 build, install, log folders
 build/
 install/
 log/
-
-# Python bytecode
 *.pyc
 __pycache__/
-
-# OS-specific files
 .DS_Store
 *.swp
-
-# agri_world
 aruco_markers/images/
-
-# access-token
 token.txt
-
-
-#UV STUFF
 .python-version
 pyproject.toml
 uv.lock
-
-# actor plugin:
 gazebo-ros-actor-plugin/
+.vscode/
+.idea/
+*.swo
+*~
+.docker/

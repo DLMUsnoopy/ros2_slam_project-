@@ -14,14 +14,7 @@ services:
       - ./docker_zsh_history.txt:/home/dev/.zsh_history
       - ./zsh.rc:/home/dev/.zshrc
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - ../:/home/dev/ros_ws
+      - ../:/home/dev/p03_ws
       - /dev/bus/usb:/dev/bus/usb
     environment:
       - DISPLAY=${DISPLAY}
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu, compute, utility, graphics]
