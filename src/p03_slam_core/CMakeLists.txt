@@ -8,6 +8,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 
 add_library(${PROJECT_NAME} STATIC
+  src/point2d.cpp
   src/pose2d.cpp
 )
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
@@ -47,6 +48,11 @@ if(BUILD_TESTING)
     test/test_pose2d.cpp
   )
   target_link_libraries(test_pose2d ${PROJECT_NAME})
+
+  ament_add_gtest(test_point2d
+    test/test_point2d.cpp
+  )
+  target_link_libraries(test_point2d ${PROJECT_NAME})
 endif()
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
