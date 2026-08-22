@@ -9,6 +9,7 @@ find_package(ament_cmake REQUIRED)
 
 add_library(${PROJECT_NAME} STATIC
   src/grid_ray_tracing.cpp
+  src/likelihood_field2d.cpp
   src/occupancy_grid2d.cpp
   src/occupancy_grid_updater.cpp
   src/point2d.cpp
@@ -71,6 +72,11 @@ if(BUILD_TESTING)
     test/test_occupancy_grid_updater.cpp
   )
   target_link_libraries(test_occupancy_grid_updater ${PROJECT_NAME})
+
+  ament_add_gtest(test_likelihood_field2d
+    test/test_likelihood_field2d.cpp
+  )
+  target_link_libraries(test_likelihood_field2d ${PROJECT_NAME})
 endif()
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)

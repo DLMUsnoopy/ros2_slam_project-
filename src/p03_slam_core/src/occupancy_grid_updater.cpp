@@ -52,7 +52,7 @@ void OccupancyGridUpdater::insertScan(
     const double ray_length = endpoint_is_occupied ? measured_range : scan.range_max;
     const double angle = scan.angle_min + static_cast<double>(i) * scan.angle_increment;
 
-    const Point2D endpoint_sensor{ 
+    const Point2D endpoint_sensor{
       ray_length * std::cos(angle),
       ray_length * std::sin(angle)
     };
