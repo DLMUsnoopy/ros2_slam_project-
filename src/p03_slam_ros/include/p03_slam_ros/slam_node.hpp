@@ -10,6 +10,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "tf2_ros/buffer.hpp"
+#include "tf2_ros/transform_broadcaster.hpp"
 #include "tf2_ros/transform_listener.hpp"
 
 namespace p03_slam_ros
@@ -36,6 +37,7 @@ private:
 
   const std::string base_frame_;
   const std::string map_frame_;
+  const std::string odom_frame_;
   p03_slam_core::SlamFrontend2D frontend_;
 
   // Stores timestamped transforms received from TF.
@@ -43,6 +45,9 @@ private:
 
   // Receives transforms and writes them into the buffer declared above.
   tf2_ros::TransformListener tf_listener_;
+
+  // Publishes the SLAM correction between the map and odometry frames.
+  tf2_ros::TransformBroadcaster tf_broadcaster_;
 };
 
 }  // namespace p03_slam_ros

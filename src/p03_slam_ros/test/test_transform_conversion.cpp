@@ -26,5 +26,17 @@ TEST(TransformConversion, ConvertsTranslationAndYaw)
   EXPECT_NEAR(pose.yaw, 0.5 * kPi, 1e-12);
 }
 
+TEST(TransformConversion, ConvertsPoseToStampedTransform)
+{
+  const geometry_msgs::msg::TransformStamped message = toRosTransformStamped(
+    {1.5, -2.0, 0.5 * kPi}, "map", "odom");
+
+  EXPECT_EQ(message.header.frame_id, "map");
+  EXPECT_EQ(message.child_frame_id, "odom");
+  EXPECT_DOUBLE_EQ(message.transform.translation.x, 1.5);
+  EXPECT_DOUBLE_EQ(message.transform.translation.y, -2.0);
+  EXPECT_NEAR(toCorePose2D(message).yaw, 0.5 * kPi, 1e-12);
+}
+
 }  // namespace
 }  // namespace p03_slam_ros

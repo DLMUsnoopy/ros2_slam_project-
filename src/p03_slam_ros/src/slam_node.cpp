@@ -41,9 +41,11 @@ SlamNode::SlamNode()
 : rclcpp::Node("p03_slam"),
   base_frame_(declare_parameter<std::string>("base_frame", "base_link")),
   map_frame_(declare_parameter<std::string>("map_frame", "map")),
+  odom_frame_(declare_parameter<std::string>("odom_frame", "odom")),
   frontend_(makeFrontendConfig(*this)),
   tf_buffer_(get_clock()),
-  tf_listener_(tf_buffer_, this, false)
+  tf_listener_(tf_buffer_, this, false),
+  tf_broadcaster_(this)
 {
   const std::string odometry_topic = declare_parameter<std::string>(
     "odometry_topic", "wheel_odom");
@@ -127,6 +129,11 @@ void SlamNode::scanCallback(const sensor_msgs::msg::LaserScan::ConstSharedPtr me
   map_message.header.stamp = message->header.stamp;
   map_message.header.frame_id = map_frame_;
   map_publisher_->publish(map_message);
+
+  geometry_msgs::msg::TransformStamped map_from_odom_message =
+    toRosTransformStamped(update.map_from_odom, map_frame_, odom_frame_);
+  map_from_odom_message.header.stamp = message->header.stamp;
+  tf_broadcaster_.sendTransform(map_from_odom_message);
 
   RCLCPP_INFO_THROTTLE(
     get_logger(),
