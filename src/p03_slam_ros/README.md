@@ -86,3 +86,63 @@ ros2 node info /P1_robot0/p03_slam
 
 The relative topic `lidar_2d` should resolve to
 `/P1_robot0/lidar_2d`. Stop the node and simulation with `Ctrl+C`.
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+TF check :
+```bash
+ros2 run tf2_ros tf2_echo \
+  P1_robot0/base_link \
+  P1_robot0/lidar2d_link
+```
+
+```text
+Matrix:
+  1.000  0.000  0.000  0.175
+  0.000  1.000  0.000  0.000
+  0.000  0.000  1.000  0.231
+  0.000  0.000  0.000  1.000
+
+  Translation:
+x = 0.175 m
+y = 0.000 m
+z = 0.231 m
+
+Rotation:
+yaw = 0.000 rad
+```
+----------------------------
+ros2 topic echo \
+  /P1_robot0/lidar_2d \
+  --once \
+  --field header
+------------------------------
+ros2 topic echo \
+  /P1_robot0/wheel_odom \
+  --once \
+  --field header
+-----------------------------
+ros2 topic echo \
+  /P1_robot0/wheel_odom \
+  --once \
+  --field child_frame_id
+---------------------------
+ros2 topic echo \
+  /P1_robot0/wheel_odom \
+  --once \
+  --field pose.pose
+
+
+  johnny@JohnnyPC:~/ws/ros2_slam/ros2_masterproject$ ros2 topic echo \
+  /P1_robot0/wheel_odom \
+  --once \
+  --field pose.pose
+position:
+  x: -1.4454768199028135e-17
+  y: -3.705215409675186e-33
+  z: 0.0
+orientation:
+  x: 0.0
+  y: 0.0
+  z: 1.0097514522709812e-16
+  w: 1.0
