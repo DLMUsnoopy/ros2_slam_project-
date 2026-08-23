@@ -7,6 +7,7 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "p03_slam_core/pose2d.hpp"
 #include "p03_slam_ros/laser_scan_conversion.hpp"
+#include "p03_slam_ros/occupancy_grid_conversion.hpp"
 #include "p03_slam_ros/odometry_conversion.hpp"
 #include "p03_slam_ros/transform_conversion.hpp"
 #include "tf2/exceptions.hpp"
@@ -39,14 +40,23 @@ p03_slam_core::SlamFrontendConfig makeFrontendConfig(rclcpp::Node & node)
 SlamNode::SlamNode()
 : rclcpp::Node("p03_slam"),
   base_frame_(declare_parameter<std::string>("base_frame", "base_link")),
+  map_frame_(declare_parameter<std::string>("map_frame", "map")),
   frontend_(makeFrontendConfig(*this)),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_, this, false)
 {
   const std::string odometry_topic = declare_parameter<std::string>(
     "odometry_topic", "wheel_odom");
+  const std::string map_topic = declare_parameter<std::string>(
+    "map_topic", "map");
   const std::string scan_topic = declare_parameter<std::string>(
     "scan_topic", "lidar_2d");
+
+  rclcpp::QoS map_qos(rclcpp::KeepLast(1));
+  map_qos.reliable();
+  map_qos.transient_local();
+  map_publisher_ = create_publisher<nav_msgs::msg::OccupancyGrid>(
+    map_topic, map_qos);
 
   odometry_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
     odometry_topic,
@@ -111,6 +121,12 @@ void SlamNode::scanCallback(const sensor_msgs::msg::LaserScan::ConstSharedPtr me
     latest_odometry_->odom_from_base, base_from_lidar);
   const p03_slam_core::SlamUpdate2D update = frontend_.processScan(
     scan, odom_from_lidar);
+
+  nav_msgs::msg::OccupancyGrid map_message = toRosOccupancyGrid(
+    frontend_.occupancyGrid());
+  map_message.header.stamp = message->header.stamp;
+  map_message.header.frame_id = map_frame_;
+  map_publisher_->publish(map_message);
 
   RCLCPP_INFO_THROTTLE(
     get_logger(),

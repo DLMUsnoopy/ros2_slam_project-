@@ -13,6 +13,7 @@ find_package(tf2_ros REQUIRED)
 
 add_library(${PROJECT_NAME}_conversions STATIC
   src/laser_scan_conversion.cpp
+  src/occupancy_grid_conversion.cpp
   src/odometry_conversion.cpp
   src/transform_conversion.cpp
 )
@@ -110,6 +111,16 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}_conversions
   )
   ament_target_dependencies(test_odometry_conversion
+    nav_msgs
+  )
+
+  ament_add_gtest(test_occupancy_grid_conversion
+    test/test_occupancy_grid_conversion.cpp
+  )
+  target_link_libraries(test_occupancy_grid_conversion
+    ${PROJECT_NAME}_conversions
+  )
+  ament_target_dependencies(test_occupancy_grid_conversion
     nav_msgs
   )
 

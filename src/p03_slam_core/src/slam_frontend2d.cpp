@@ -1,5 +1,6 @@
 #include "p03_slam_core/slam_frontend2d.hpp"
 
+// Controls the SLAM processing pipeline.
 namespace p03_slam_core
 {
 

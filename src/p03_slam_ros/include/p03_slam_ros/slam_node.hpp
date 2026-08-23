@@ -3,6 +3,7 @@
 #include <optional>
 #include <string>
 
+#include "nav_msgs/msg/occupancy_grid.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "p03_slam_core/odometry2d.hpp"
 #include "p03_slam_core/slam_frontend2d.hpp"
@@ -29,10 +30,12 @@ private:
 
   // Stores the latest core odometry after the first message arrives.
   std::optional<p03_slam_core::Odometry2D> latest_odometry_;
+  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr map_publisher_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_subscription_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_subscription_;
 
   const std::string base_frame_;
+  const std::string map_frame_;
   p03_slam_core::SlamFrontend2D frontend_;
 
   // Stores timestamped transforms received from TF.
