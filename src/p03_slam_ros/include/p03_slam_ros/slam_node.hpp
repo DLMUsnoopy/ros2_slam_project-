@@ -5,6 +5,7 @@
 
 #include "nav_msgs/msg/odometry.hpp"
 #include "p03_slam_core/odometry2d.hpp"
+#include "p03_slam_core/slam_frontend2d.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "tf2_ros/buffer.hpp"
@@ -32,6 +33,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_subscription_;
 
   const std::string base_frame_;
+  p03_slam_core::SlamFrontend2D frontend_;
 
   // Stores timestamped transforms received from TF.
   tf2_ros::Buffer tf_buffer_;

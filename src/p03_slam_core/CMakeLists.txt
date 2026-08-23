@@ -15,6 +15,7 @@ add_library(${PROJECT_NAME} STATIC
   src/occupancy_grid_updater.cpp
   src/point2d.cpp
   src/pose2d.cpp
+  src/slam_frontend2d.cpp
 )
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_include_directories(${PROJECT_NAME}
@@ -83,6 +84,11 @@ if(BUILD_TESTING)
     test/test_likelihood_field_matcher2d.cpp
   )
   target_link_libraries(test_likelihood_field_matcher2d ${PROJECT_NAME})
+
+  ament_add_gtest(test_slam_frontend2d
+    test/test_slam_frontend2d.cpp
+  )
+  target_link_libraries(test_slam_frontend2d ${PROJECT_NAME})
 endif()
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
