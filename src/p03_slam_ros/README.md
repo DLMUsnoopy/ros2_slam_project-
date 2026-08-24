@@ -31,7 +31,7 @@ Start the simulator in terminal 1:
 ```bash
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
-ros2 launch ipb_ros2_sim all.launch.py sim_config:=indoor rviz:=False
+ros2 launch ipb_ros2_sim all.launch.py sim_config:=indoor 
 ```
 
 Start odometry and SLAM in terminal 2:
