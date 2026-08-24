@@ -37,6 +37,9 @@ public:
   [[nodiscard]] const OccupancyGridConfig & config() const noexcept;
   [[nodiscard]] std::size_t cellCount() const noexcept;
   [[nodiscard]] bool contains(const GridIndex & index) const noexcept;
+  // Converts a finite world position without rejecting an out-of-map index.
+  [[nodiscard]] std::optional<GridIndex> worldToGridUnbounded(
+    const Point2D & point_world) const noexcept;
   [[nodiscard]] std::optional<GridIndex> worldToGrid(
     const Point2D & point_world) const noexcept;
   [[nodiscard]] float logOdds(const GridIndex & index) const noexcept;

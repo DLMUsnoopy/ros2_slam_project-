@@ -27,6 +27,13 @@ def generate_launch_description():
             ),
             Node(
                 package="p03_slam_ros",
+                executable="wheel_imu_odometry_node",
+                namespace=robot_namespace,
+                parameters=[parameters_file],
+                output="screen",
+            ),
+            Node(
+                package="p03_slam_ros",
                 executable="p03_slam_node",
                 namespace=robot_namespace,
                 parameters=[parameters_file],

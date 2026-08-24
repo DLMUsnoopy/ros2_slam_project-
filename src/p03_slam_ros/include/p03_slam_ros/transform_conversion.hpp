@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "p03_slam_core/pose2d.hpp"
 
@@ -17,5 +18,10 @@ namespace p03_slam_ros
   const p03_slam_core::Pose2D & pose,
   const std::string & parent_frame,
   const std::string & child_frame);
+
+// Converts a planar core pose into a stamped ROS 2 pose.
+[[nodiscard]] geometry_msgs::msg::PoseStamped toRosPoseStamped(
+  const p03_slam_core::Pose2D & pose,
+  const std::string & frame);
 
 }  // namespace p03_slam_ros

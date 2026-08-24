@@ -35,17 +35,27 @@ bool OccupancyGrid2D::contains(const GridIndex & index) const noexcept
          static_cast<std::size_t>(index.y) < config_.height;
 }
 
+std::optional<GridIndex> OccupancyGrid2D::worldToGridUnbounded(
+  const Point2D & point_world) const noexcept
+{
+  if (!std::isfinite(point_world.x) || !std::isfinite(point_world.y)) {
+    return std::nullopt;
+  }
+
+  // floor maps negative coordinates downward instead of truncating them toward zero.
+  return GridIndex{
+    static_cast<int>(std::floor((point_world.x - config_.origin.x) / config_.resolution)),
+    static_cast<int>(std::floor((point_world.y - config_.origin.y) / config_.resolution))
+  };
+}
+
 // Converts a world position into a valid grid index.
 std::optional<GridIndex> OccupancyGrid2D::worldToGrid(
   const Point2D & point_world) const noexcept
 {
-  // floor maps negative coordinates downward instead of truncating them toward zero.
-  const GridIndex index{
-    static_cast<int>(std::floor((point_world.x - config_.origin.x) / config_.resolution)),
-    static_cast<int>(std::floor((point_world.y - config_.origin.y) / config_.resolution))
-  };
+  const std::optional<GridIndex> index = worldToGridUnbounded(point_world);
 
-  if (!contains(index)) {
+  if (!index || !contains(*index)) {
     return std::nullopt;
   }
   return index;

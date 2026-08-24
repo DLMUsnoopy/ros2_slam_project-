@@ -36,4 +36,19 @@ geometry_msgs::msg::TransformStamped toRosTransformStamped(
   return message;
 }
 
+geometry_msgs::msg::PoseStamped toRosPoseStamped(
+  const p03_slam_core::Pose2D & pose,
+  const std::string & frame)
+{
+  geometry_msgs::msg::PoseStamped message;
+  message.header.frame_id = frame;
+  message.pose.position.x = pose.x;
+  message.pose.position.y = pose.y;
+
+  tf2::Quaternion rotation;
+  rotation.setRPY(0.0, 0.0, pose.yaw);
+  message.pose.orientation = tf2::toMsg(rotation);
+  return message;
+}
+
 }  // namespace p03_slam_ros

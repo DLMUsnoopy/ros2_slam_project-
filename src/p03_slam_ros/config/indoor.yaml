@@ -3,15 +3,69 @@
     use_sim_time: true
 
     scan_topic: lidar_2d
-    odometry_topic: wheel_odom
+    odometry_topic: wheel_imu_odom
     map_topic: map
+    pose_topic: slam_pose
+    minimum_usable_range: 0.25
+    odometry_buffer_duration: 5.0
+    max_odometry_interpolation_gap: 0.20
+    max_pending_scans: 20
 
     map_frame: map
     odom_frame: P1_robot0/odom
     base_frame: P1_robot0/base_link
+    publish_odom_tf: true
 
-    map_width_cells: 400
-    map_height_cells: 400
-    map_resolution: 0.05
-    map_origin_x: -10.0
-    map_origin_y: -10.0
+    map_width: 900
+    map_height: 900
+    resolution: 0.04
+    origin_x: -10.0
+    origin_y: -10.0
+
+    free_log_odds: -0.40
+    occupied_log_odds: 0.85
+    min_log_odds: -4.0
+    max_log_odds: 4.0
+    max_mapping_range: 20.0
+    occupied_radius: 1
+
+    linear_search_window: 0.30
+    angular_search_window_deg: 10.0
+    linear_search_step: 0.05
+    angular_search_step_deg: 2.0
+    fine_linear_search_window: 0.08
+    fine_angular_search_window_deg: 3.0
+    fine_linear_search_step: 0.02
+    fine_angular_search_step_deg: 0.75
+    min_match_score: 0.12
+    min_score_improvement: 0.03
+    min_matched_points: 35
+    max_matching_range: 15.0
+    scan_downsample: 4
+    correction_gain: 0.20
+    correction_deadband_translation: 0.025
+    correction_deadband_rotation_deg: 1.0
+
+    bootstrap_scans: 20
+    stationary_translation_threshold: 0.005
+    stationary_rotation_threshold_deg: 0.30
+    stationary_map_update_interval: 10
+    likelihood_update_interval: 3
+    maximum_angular_velocity_for_matching: 0.25
+
+    likelihood_occupied_probability: 0.65
+    likelihood_sigma: 0.15
+    likelihood_max_distance: 0.50
+    map_publish_rate: 2.0
+
+    joint_states_topic: joint_states
+    imu_topic: imu
+    wheel_radius: 0.098
+    wheel_separation: 0.37559
+    imu_timeout: 0.15
+    left_wheel_joints:
+      - /P1_robot0/front_left_wheel
+      - /P1_robot0/rear_left_wheel
+    right_wheel_joints:
+      - /P1_robot0/front_right_wheel
+      - /P1_robot0/rear_right_wheel

@@ -59,5 +59,31 @@ TEST(SlamFrontend2D, CorrectsOdometryDriftOnLaterScan)
   EXPECT_DOUBLE_EQ(update.score, 1.0);
 }
 
+TEST(SlamFrontend2D, UsesOdometryDuringFastRotation)
+{
+  SlamFrontendConfig config;
+  config.occupancy_grid.width = 10;
+  config.occupancy_grid.height = 10;
+  config.occupancy_grid.resolution = 1.0;
+  config.maximum_angular_velocity_for_matching = 0.5;
+  SlamFrontend2D frontend(config);
+
+  LaserScan2D scan;
+  scan.timestamp_nanoseconds = 1000000000LL;
+  scan.range_min = 0.1;
+  scan.range_max = 10.0;
+  scan.ranges = {2.0F};
+  static_cast<void>(frontend.processScan(scan, {2.0, 3.0, 0.0}));
+
+  scan.timestamp_nanoseconds = 1100000000LL;
+  const SlamUpdate2D update = frontend.processScan(scan, {2.0, 4.0, 1.0});
+
+  EXPECT_FALSE(update.scan_match_attempted);
+  EXPECT_FALSE(update.scan_matched);
+  EXPECT_DOUBLE_EQ(update.map_from_lidar.y, 4.0);
+  EXPECT_DOUBLE_EQ(update.map_from_odom.y, 0.0);
+  EXPECT_DOUBLE_EQ(update.map_from_odom.yaw, 0.0);
+}
+
 }  // namespace
 }  // namespace p03_slam_core

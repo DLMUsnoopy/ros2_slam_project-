@@ -36,6 +36,7 @@ ament_target_dependencies(${PROJECT_NAME}_conversions
 
 add_library(${PROJECT_NAME}_node STATIC
   src/slam_node.cpp
+  src/wheel_imu_odometry_node.cpp
 )
 target_compile_features(${PROJECT_NAME}_node PUBLIC cxx_std_17)
 target_include_directories(${PROJECT_NAME}_node
@@ -47,6 +48,7 @@ target_link_libraries(${PROJECT_NAME}_node
   ${PROJECT_NAME}_conversions
 )
 ament_target_dependencies(${PROJECT_NAME}_node
+  geometry_msgs
   nav_msgs
   rclcpp
   sensor_msgs
@@ -64,6 +66,17 @@ ament_target_dependencies(p03_slam_node
   rclcpp
 )
 
+add_executable(wheel_imu_odometry_node
+  src/wheel_imu_odometry_node_main.cpp
+)
+target_compile_features(wheel_imu_odometry_node PUBLIC cxx_std_17)
+target_link_libraries(wheel_imu_odometry_node
+  ${PROJECT_NAME}_node
+)
+ament_target_dependencies(wheel_imu_odometry_node
+  rclcpp
+)
+
 install(
   TARGETS
     ${PROJECT_NAME}_conversions
@@ -74,7 +87,9 @@ install(
   RUNTIME DESTINATION bin
 )
 install(
-  TARGETS p03_slam_node
+  TARGETS
+    p03_slam_node
+    wheel_imu_odometry_node
   DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY include/ DESTINATION include)

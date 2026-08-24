@@ -12,6 +12,7 @@ struct InverseSensorModelConfig
 {
   float free_space_evidence{-0.4F};
   float occupied_space_evidence{0.85F};
+  int occupied_radius{0};
 };
 
 // Converts inverse sensor model results into occupancy-grid updates.
@@ -34,6 +35,9 @@ public:
     const Pose2D & map_from_sensor) const;
 
 private:
+  // Adds occupied evidence to a circular neighborhood around one endpoint.
+  void addOccupiedEvidence(OccupancyGrid2D & grid, const GridIndex & endpoint) const;
+
   InverseSensorModelConfig config_;
 };
 

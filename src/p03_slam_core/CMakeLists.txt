@@ -13,6 +13,7 @@ add_library(${PROJECT_NAME} STATIC
   src/likelihood_field_matcher2d.cpp
   src/occupancy_grid2d.cpp
   src/occupancy_grid_updater.cpp
+  src/odometry_buffer2d.cpp
   src/point2d.cpp
   src/pose2d.cpp
   src/slam_frontend2d.cpp
@@ -74,6 +75,11 @@ if(BUILD_TESTING)
     test/test_occupancy_grid_updater.cpp
   )
   target_link_libraries(test_occupancy_grid_updater ${PROJECT_NAME})
+
+  ament_add_gtest(test_odometry_buffer2d
+    test/test_odometry_buffer2d.cpp
+  )
+  target_link_libraries(test_odometry_buffer2d ${PROJECT_NAME})
 
   ament_add_gtest(test_likelihood_field2d
     test/test_likelihood_field2d.cpp
