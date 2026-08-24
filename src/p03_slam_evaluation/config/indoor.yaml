@@ -1,0 +1,15 @@
+/**:
+  ros__parameters:
+    use_sim_time: true
+
+    estimated_pose_topic: slam_pose
+    ground_truth_topic: odom_gt
+    estimated_path_topic: evaluation/estimated_path
+    ground_truth_path_topic: evaluation/ground_truth_path
+    map_frame: map
+
+    ground_truth_buffer_duration: 5.0
+    max_ground_truth_interpolation_gap: 0.20
+    max_pending_estimates: 50
+    max_path_points: 2000
+    publish_rate: 1.0
