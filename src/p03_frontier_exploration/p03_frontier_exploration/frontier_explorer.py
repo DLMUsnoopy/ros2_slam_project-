@@ -13,8 +13,12 @@ import time
 import rclpy
 from geometry_msgs.msg import Point, PoseStamped
 from nav_msgs.msg import OccupancyGrid, Odometry
+from rclpy.duration import Duration
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+from rclpy.time import Time
+from std_msgs.msg import Bool
+from tf2_ros import Buffer, TransformException, TransformListener
 from visualization_msgs.msg import Marker
 
 
@@ -90,10 +94,16 @@ class FrontierExplorer(Node):
     def __init__(self):
         super().__init__("frontier_explorer")
 
-        self.declare_parameter("map_topic", "/map")
+        self.declare_parameter("map_topic", "/P1_robot0/map")
+        self.declare_parameter("pose_source", "tf")
         self.declare_parameter("pose_topic", "/P1_robot0/odom_gt")
-        self.declare_parameter("pose_frame_override", "map")
+        self.declare_parameter("pose_frame_override", "")
+        self.declare_parameter("map_frame", "map")
+        self.declare_parameter("base_frame", "P1_robot0/base_link")
         self.declare_parameter("goal_pose_topic", "/P1_robot0/goal_pose")
+        self.declare_parameter("goal_reached_topic", "/P1_robot0/goal_reached")
+        self.declare_parameter("require_goal_reached", True)
+        self.declare_parameter("goal_completion_min_age", 1.0)
         self.declare_parameter("frontier_marker_topic", "frontier_clusters")
         self.declare_parameter("goal_marker_topic", "frontier_goal_marker")
         self.declare_parameter("update_rate", 1.0)
@@ -116,9 +126,15 @@ class FrontierExplorer(Node):
 
         gp = lambda name: self.get_parameter(name).value
         self.map_topic = gp("map_topic")
+        self.pose_source = str(gp("pose_source")).strip().lower()
         self.pose_topic = gp("pose_topic")
         self.pose_frame_override = str(gp("pose_frame_override")).strip()
+        self.map_frame = str(gp("map_frame")).strip()
+        self.base_frame = str(gp("base_frame")).strip()
         self.goal_pose_topic = gp("goal_pose_topic")
+        self.goal_reached_topic = gp("goal_reached_topic")
+        self.require_goal_reached = parameter_as_bool(gp("require_goal_reached"))
+        self.goal_completion_min_age = max(0.0, float(gp("goal_completion_min_age")))
         self.frontier_marker_topic = gp("frontier_marker_topic")
         self.goal_marker_topic = gp("goal_marker_topic")
         self.update_rate = max(0.1, float(gp("update_rate")))
@@ -147,26 +163,36 @@ class FrontierExplorer(Node):
         self.current_goal_selected_time = 0.0
         self.last_goal_publish_time = 0.0
         self.last_selection_log_time = 0.0
+        self.controller_reset_seen = False
+        self.goal_completion_pending = False
+
+        if self.pose_source not in ("tf", "pose_topic"):
+            raise ValueError("pose_source must be 'tf' or 'pose_topic'")
 
         map_qos = QoSProfile(depth=1)
         map_qos.reliability = ReliabilityPolicy.RELIABLE
         map_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
 
         self.create_subscription(OccupancyGrid, self.map_topic, self.on_map, map_qos)
-        self.create_subscription(Odometry, self.pose_topic, self.on_pose, 20)
+        if self.pose_source == "pose_topic":
+            self.create_subscription(Odometry, self.pose_topic, self.on_pose, 20)
+        self.create_subscription(Bool, self.goal_reached_topic, self.on_goal_reached, 10)
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
         self.goal_pub = self.create_publisher(PoseStamped, self.goal_pose_topic, 10)
         self.frontier_marker_pub = self.create_publisher(Marker, self.frontier_marker_topic, 10)
         self.goal_marker_pub = self.create_publisher(Marker, self.goal_marker_topic, 10)
         self.create_timer(1.0 / self.update_rate, self.on_timer)
 
-        pose_frame_note = (
-            f" interpreted as '{self.pose_frame_override}'"
-            if self.pose_frame_override
-            else ""
+        pose_description = (
+            f"TF '{self.map_frame}' -> '{self.base_frame}'"
+            if self.pose_source == "tf"
+            else f"pose '{self.pose_topic}'"
         )
         self.get_logger().info(
-            f"Ready. Watching map '{self.map_topic}', pose '{self.pose_topic}'"
-            f"{pose_frame_note}, publishing frontier goals to '{self.goal_pose_topic}'."
+            f"Ready. Watching map '{self.map_topic}', {pose_description}, publishing "
+            f"frontier goals to '{self.goal_pose_topic}' after completion feedback on "
+            f"'{self.goal_reached_topic}'."
         )
 
     def on_map(self, msg):
@@ -177,9 +203,53 @@ class FrontierExplorer(Node):
         """Cache the latest robot pose."""
         self.robot_pose = msg
 
+    def on_goal_reached(self, msg):
+        """Accept completion only after the controller has reset for this goal."""
+        if not msg.data:
+            self.controller_reset_seen = True
+            return
+        goal_age = time.monotonic() - self.current_goal_selected_time
+        if (
+            self.current_goal_cell is not None
+            and self.controller_reset_seen
+            and goal_age >= self.goal_completion_min_age
+        ):
+            self.goal_completion_pending = True
+            self.controller_reset_seen = False
+
+    def update_robot_pose_from_tf(self):
+        """Cache the latest map-frame base pose from the SLAM TF tree."""
+        try:
+            transform = self.tf_buffer.lookup_transform(
+                self.map_frame,
+                self.base_frame,
+                Time(),
+                timeout=Duration(seconds=0.2),
+            )
+        except TransformException as error:
+            self.get_logger().warn(
+                f"Waiting for TF '{self.map_frame}' -> '{self.base_frame}': {error}",
+                throttle_duration_sec=5.0,
+            )
+            return False
+
+        pose = Odometry()
+        pose.header = transform.header
+        pose.child_frame_id = self.base_frame
+        pose.pose.pose.position.x = transform.transform.translation.x
+        pose.pose.pose.position.y = transform.transform.translation.y
+        pose.pose.pose.position.z = transform.transform.translation.z
+        pose.pose.pose.orientation = transform.transform.rotation
+        self.robot_pose = pose
+        return True
+
     def on_timer(self):
         """Periodically select and publish an exploration goal."""
-        if self.map_msg is None or self.robot_pose is None:
+        if self.map_msg is None:
+            return
+        if self.pose_source == "tf" and not self.update_robot_pose_from_tf():
+            return
+        if self.robot_pose is None:
             return
 
         map_frame = self.map_msg.header.frame_id or "map"
@@ -222,29 +292,12 @@ class FrontierExplorer(Node):
                 robot_position.x - self.current_goal_world[0],
                 robot_position.y - self.current_goal_world[1],
             )
-            current_goal_is_frontier = self.goal_is_still_frontier(
-                self.current_goal_cell, clusters, info.resolution
-            )
-            held_time = now - self.current_goal_selected_time
-            candidate_shift = math.hypot(
-                goal_world[0] - self.current_goal_world[0],
-                goal_world[1] - self.current_goal_world[1],
-            )
-            better_score = candidate_score + self.goal_switch_score_margin < self.current_goal_score
-
-            if current_goal_distance <= self.goal_reached_distance:
+            if self.goal_completion_pending:
                 should_pick_new_goal = True
-                switch_reason = "reached"
-            elif not current_goal_is_frontier:
+                switch_reason = "controller_goal_reached"
+            elif not self.require_goal_reached and current_goal_distance <= self.goal_reached_distance:
                 should_pick_new_goal = True
-                switch_reason = "frontier_finished"
-            elif (
-                held_time >= self.min_goal_hold_time
-                and candidate_shift >= self.goal_change_distance
-                and better_score
-            ):
-                should_pick_new_goal = True
-                switch_reason = "better_information_gain"
+                switch_reason = "distance_reached"
             else:
                 should_pick_new_goal = False
 
@@ -253,6 +306,8 @@ class FrontierExplorer(Node):
             self.current_goal_world = goal_world
             self.current_goal_score = candidate_score
             self.current_goal_selected_time = now
+            self.controller_reset_seen = False
+            self.goal_completion_pending = False
             self.publish_goal(map_frame)
             if now - self.last_selection_log_time > 1.0:
                 self.last_selection_log_time = now
@@ -610,9 +665,12 @@ def main(args=None):
     node = FrontierExplorer()
     try:
         rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

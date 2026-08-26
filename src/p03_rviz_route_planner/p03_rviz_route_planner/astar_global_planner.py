@@ -564,13 +564,16 @@ class AStarGlobalPlanner(Node):
         """Declare parameters, initialize state, and create ROS interfaces."""
         super().__init__("astar_global_planner")
 
-        # Input topics. The pose topic must describe the robot in the same
-        # global frame as the OccupancyGrid, normally "map". The default pose
-        # source is Gazebo ground truth; pose_frame_override tells the planner
-        # to interpret those coordinates in the saved map frame.
-        self.declare_parameter("map_topic", "/map")
+        # The SLAM occupancy grid and TF tree are the authoritative navigation
+        # state. A topic pose source is kept only as a backwards-compatible
+        # option for experiments that do not publish map -> base TF.
+        self.declare_parameter("map_topic", "/P1_robot0/map") # change the map source to /P1_robot0/map
+        self.declare_parameter("pose_source", "tf")  # Select TF or topic pose input.
         self.declare_parameter("pose_topic", "/P1_robot0/odom_gt")
-        self.declare_parameter("pose_frame_override", "map")
+        self.declare_parameter("pose_frame_override", "")
+        self.declare_parameter("map_frame", "map")
+        self.declare_parameter("base_frame", "P1_robot0/base_link")
+        self.declare_parameter("tf_lookup_rate", 20.0)
         self.declare_parameter("goal_pose_topic", "/P1_robot0/goal_pose")
         self.declare_parameter("goal_update_distance", 0.01)
 
@@ -619,8 +622,12 @@ class AStarGlobalPlanner(Node):
         # implemented by this compact standalone planner.
         gp = lambda name: self.get_parameter(name).value
         self.map_topic = gp("map_topic")
+        self.pose_source = str(gp("pose_source")).strip().lower()
         self.pose_topic = gp("pose_topic")
         self.pose_frame_override = str(gp("pose_frame_override")).strip()
+        self.map_frame = str(gp("map_frame")).strip().lstrip("/")
+        self.base_frame = str(gp("base_frame")).strip().lstrip("/")
+        self.tf_lookup_rate = max(0.1, float(gp("tf_lookup_rate")))
         self.goal_pose_topic = gp("goal_pose_topic")
         self.goal_update_distance = max(0.0, float(gp("goal_update_distance")))
         self.path_topic = gp("path_topic")
@@ -675,7 +682,15 @@ class AStarGlobalPlanner(Node):
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
         self.create_subscription(OccupancyGrid, self.map_topic, self.on_map, map_qos)
-        self.create_subscription(Odometry, self.pose_topic, self.on_pose, 10)
+        if self.pose_source == "topic":
+            self.create_subscription(Odometry, self.pose_topic, self.on_pose, 10)
+            self.tf_pose_timer = None
+        elif self.pose_source == "tf":
+            self.tf_pose_timer = self.create_timer(
+                1.0 / self.tf_lookup_rate, self.update_robot_pose_from_tf
+            )
+        else:
+            raise ValueError("pose_source must be 'tf' or 'topic'")
         self.create_subscription(PoseStamped, self.goal_pose_topic, self.on_goal_pose, 10)
         self.path_pub = self.create_publisher(Path, self.path_topic, 10)
         self.pose_array_pub = self.create_publisher(PoseArray, self.pose_array_topic, 10)
@@ -685,13 +700,17 @@ class AStarGlobalPlanner(Node):
         if self.replan_rate > 0.0:
             self.replan_timer = self.create_timer(1.0 / self.replan_rate, self.on_replan_timer)
 
-        pose_frame_note = (
-            f" interpreted as frame '{self.pose_frame_override}'"
-            if self.pose_frame_override else ""
-        )
+        if self.pose_source == "tf":
+            pose_description = f"TF '{self.map_frame}' -> '{self.base_frame}'"
+        else:
+            pose_frame_note = (
+                f" interpreted as frame '{self.pose_frame_override}'"
+                if self.pose_frame_override else ""
+            )
+            pose_description = f"pose '{self.pose_topic}'{pose_frame_note}"
         self.get_logger().info(
-            f"Ready. Waiting for map '{self.map_topic}', pose '{self.pose_topic}'"
-            f"{pose_frame_note}, and RViz goals on '{self.goal_pose_topic}'. "
+            f"Ready. Waiting for map '{self.map_topic}', {pose_description}, "
+            f"and RViz goals on '{self.goal_pose_topic}'. "
             f"replan_rate={self.replan_rate:.2f} Hz, "
             f"freeze_prefix_waypoints={self.freeze_prefix_waypoints}, "
             f"waypoint_reached_threshold={self.waypoint_reached_threshold:.2f} m."
@@ -741,6 +760,34 @@ class AStarGlobalPlanner(Node):
             self.prune_reached_waypoints(msg.pose.pose.position)
         if self.goal_pose is not None and self.waiting_for_inputs:
             self.plan()
+
+    def update_robot_pose_from_tf(self):
+        """Read the current SLAM pose from map -> base TF."""
+        map_frame = (
+            self.map_msg.header.frame_id.lstrip("/")
+            if self.map_msg is not None and self.map_msg.header.frame_id
+            else self.map_frame
+        )
+        try:
+            transform = self.tf_buffer.lookup_transform(
+                map_frame, self.base_frame, rclpy.time.Time()
+            )
+        except Exception as exc:
+            self.get_logger().warn(
+                f"Waiting for TF '{map_frame}' -> '{self.base_frame}': {exc}",
+                throttle_duration_sec=5.0,
+            )
+            return
+
+        pose = Odometry()
+        pose.header = transform.header
+        pose.header.frame_id = map_frame
+        pose.child_frame_id = self.base_frame
+        pose.pose.pose.position.x = transform.transform.translation.x
+        pose.pose.pose.position.y = transform.transform.translation.y
+        pose.pose.pose.position.z = transform.transform.translation.z
+        pose.pose.pose.orientation = transform.transform.rotation
+        self.on_pose(pose)
 
     def on_replan_timer(self):
         """Periodically replan from the frozen NMPC prefix anchor."""

@@ -8,7 +8,12 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument("use_sim_time", default_value="true", description="Use simulation clock."),
-            DeclareLaunchArgument("map_topic", default_value="/map", description="Occupancy grid used by A*."),
+            DeclareLaunchArgument("map_topic", default_value="/P1_robot0/map", description="SLAM occupancy grid used by A*."),
+            DeclareLaunchArgument(
+                "pose_source",
+                default_value="tf",
+                description="Robot pose source: tf or topic.",
+            ),
             DeclareLaunchArgument(
                 "pose_topic",
                 default_value="/P1_robot0/odom_gt",
@@ -16,9 +21,12 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "pose_frame_override",
-                default_value="map",
+                default_value="",
                 description="Frame used to interpret pose_topic coordinates. Empty disables override.",
             ),
+            DeclareLaunchArgument("map_frame", default_value="map"),
+            DeclareLaunchArgument("base_frame", default_value="P1_robot0/base_link"),
+            DeclareLaunchArgument("tf_lookup_rate", default_value="20.0"),
             DeclareLaunchArgument(
                 "goal_pose_topic",
                 default_value="/P1_robot0/goal_pose",
@@ -127,8 +135,12 @@ def generate_launch_description():
                 parameters=[
                     {"use_sim_time": LaunchConfiguration("use_sim_time")},
                     {"map_topic": LaunchConfiguration("map_topic")},
+                    {"pose_source": LaunchConfiguration("pose_source")},
                     {"pose_topic": LaunchConfiguration("pose_topic")},
                     {"pose_frame_override": LaunchConfiguration("pose_frame_override")},
+                    {"map_frame": LaunchConfiguration("map_frame")},
+                    {"base_frame": LaunchConfiguration("base_frame")},
+                    {"tf_lookup_rate": LaunchConfiguration("tf_lookup_rate")},
                     {"goal_pose_topic": LaunchConfiguration("goal_pose_topic")},
                     {"goal_update_distance": LaunchConfiguration("goal_update_distance")},
                     {"inflation_radius": LaunchConfiguration("inflation_radius")},

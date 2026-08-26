@@ -1,0 +1,68 @@
+astar_global_planner:
+  ros__parameters:
+    use_sim_time: true
+    map_topic: /P1_robot0/map
+    pose_source: tf
+    map_frame: map
+    base_frame: P1_robot0/base_link
+    tf_lookup_rate: 20.0
+    goal_pose_topic: /P1_robot0/goal_pose
+    path_topic: /planned_route
+    pose_array_topic: /planned_route_poses
+    marker_topic: /planned_route_marker
+    search_marker_topic: /astar_search_cells
+    inflation_radius: 0.30
+    obstacle_cost_radius: 0.45
+    obstacle_cost_weight: 4.0
+    endpoint_search_radius: 0.50
+    replan_rate: 5.0
+    replan_on_map_update: false
+    map_preprocess_rate: 2.0
+    reduce_waypoints: true
+    waypoint_spacing: 0.20
+    waypoint_reached_threshold: 0.10
+
+p03_nmpc_controller:
+  ros__parameters:
+    use_sim_time: true
+    map_frame: map
+    base_frame: P1_robot0/base_link
+    waypoint_topic: /planned_route_poses
+    lidar_topic: /P1_robot0/lidar_map_data
+    cmd_vel_topic: /P1_robot0/cmd_vel
+    goal_reached_topic: /P1_robot0/goal_reached
+    obstacle_marker_topic: /P1_robot0/obstacle_markers
+    control_rate: 50.0
+    pose_timeout: 0.5
+    route_timeout: 2.0
+    waypoint_tolerance: 0.20
+    goal_tolerance: 0.25
+
+p03_obstacle_detector:
+  ros__parameters:
+    use_sim_time: true
+    pose_source: tf
+    map_frame: map
+    base_frame: P1_robot0/base_link
+    lidar_topic: /P1_robot0/lidar_2d
+    output_topic: /P1_robot0/lidar_map_data
+    free_ray_max_range: 25.0
+
+p03_frontier_explorer:
+  ros__parameters:
+    use_sim_time: true
+    map_topic: /P1_robot0/map
+    pose_source: tf
+    map_frame: map
+    base_frame: P1_robot0/base_link
+    goal_pose_topic: /P1_robot0/goal_pose
+    goal_reached_topic: /P1_robot0/goal_reached
+    require_goal_reached: true
+    goal_completion_min_age: 1.0
+    update_rate: 1.0
+    min_frontier_size: 8
+    robot_clearance_radius: 0.25
+    start_search_radius: 0.50
+    selection_strategy: information_gain
+    information_gain_radius: 1.0
+    information_gain_weight: 0.05
