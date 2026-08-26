@@ -15,12 +15,12 @@ astar_global_planner:
     obstacle_cost_radius: 0.45
     obstacle_cost_weight: 4.0
     endpoint_search_radius: 0.50
-    replan_rate: 5.0
+    replan_rate: 1.0
     replan_on_map_update: false
     map_preprocess_rate: 2.0
     reduce_waypoints: true
-    waypoint_spacing: 0.20
-    waypoint_reached_threshold: 0.10
+    waypoint_spacing: 0.30
+    waypoint_reached_threshold: 0.25
 
 p03_nmpc_controller:
   ros__parameters:
