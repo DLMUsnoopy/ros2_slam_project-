@@ -10,6 +10,7 @@
 #include "p03_slam_core/odometry_buffer2d.hpp"
 #include "p03_slam_evaluation/trajectory_evaluator2d.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/float64.hpp"
 
 namespace p03_slam_evaluation
 {
@@ -34,6 +35,9 @@ private:
   // Publishes bounded paths and prints the latest accumulated metrics.
   void publishEvaluation();
 
+  // Publishes one synchronized error sample for live plotting.
+  void publishMetrics(const TrajectoryMetrics2D & metrics);
+
   // Adds a pose and removes the oldest point when the path is full.
   void appendPose(
     nav_msgs::msg::Path & path,
@@ -45,6 +49,15 @@ private:
     estimated_pose_subscription_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr estimated_path_publisher_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr ground_truth_path_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr
+    translation_error_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr
+    translation_rmse_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr
+    translation_max_error_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr yaw_error_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr yaw_rmse_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr yaw_max_error_publisher_;
   rclcpp::TimerBase::SharedPtr publish_timer_;
 
   const std::size_t max_pending_estimates_;

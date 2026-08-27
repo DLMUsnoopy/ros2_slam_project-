@@ -85,6 +85,8 @@ EvaluationNode::EvaluationNode()
     "estimated_path_topic", "evaluation/estimated_path");
   const std::string ground_truth_path_topic = declare_parameter<std::string>(
     "ground_truth_path_topic", "evaluation/ground_truth_path");
+  const std::string metrics_topic_prefix = declare_parameter<std::string>(
+    "metrics_topic_prefix", "evaluation/errors");
   const double publish_rate = std::max(
     0.1, declare_parameter<double>("publish_rate", 1.0));
 
@@ -95,6 +97,19 @@ EvaluationNode::EvaluationNode()
     estimated_path_topic, path_qos);
   ground_truth_path_publisher_ = create_publisher<nav_msgs::msg::Path>(
     ground_truth_path_topic, path_qos);
+
+  translation_error_publisher_ = create_publisher<std_msgs::msg::Float64>(
+    metrics_topic_prefix + "/translation/current", 10);
+  translation_rmse_publisher_ = create_publisher<std_msgs::msg::Float64>(
+    metrics_topic_prefix + "/translation/rmse", 10);
+  translation_max_error_publisher_ = create_publisher<std_msgs::msg::Float64>(
+    metrics_topic_prefix + "/translation/max", 10);
+  yaw_error_publisher_ = create_publisher<std_msgs::msg::Float64>(
+    metrics_topic_prefix + "/yaw/current_deg", 10);
+  yaw_rmse_publisher_ = create_publisher<std_msgs::msg::Float64>(
+    metrics_topic_prefix + "/yaw/rmse_deg", 10);
+  yaw_max_error_publisher_ = create_publisher<std_msgs::msg::Float64>(
+    metrics_topic_prefix + "/yaw/max_deg", 10);
 
   ground_truth_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
     ground_truth_topic,
@@ -179,6 +194,7 @@ void EvaluationNode::processPendingEstimates()
     const p03_slam_core::Pose2D estimated_pose = toPose2D(estimate_message->pose);
     const TrajectoryEvaluation2D evaluation = evaluator_.addSample(
       estimated_pose, *ground_truth_pose);
+    publishMetrics(evaluation.metrics);
     appendPose(estimated_path_, *estimate_message);
     appendPose(
       aligned_ground_truth_path_,
@@ -188,6 +204,23 @@ void EvaluationNode::processPendingEstimates()
         map_frame_));
     pending_estimates_.pop_front();
   }
+}
+
+void EvaluationNode::publishMetrics(const TrajectoryMetrics2D & metrics)
+{
+  std_msgs::msg::Float64 value;
+  value.data = metrics.latest_translation_error;
+  translation_error_publisher_->publish(value);
+  value.data = metrics.translation_rmse;
+  translation_rmse_publisher_->publish(value);
+  value.data = metrics.maximum_translation_error;
+  translation_max_error_publisher_->publish(value);
+  value.data = metrics.latest_yaw_error * kRadiansToDegrees;
+  yaw_error_publisher_->publish(value);
+  value.data = metrics.yaw_rmse * kRadiansToDegrees;
+  yaw_rmse_publisher_->publish(value);
+  value.data = metrics.maximum_yaw_error * kRadiansToDegrees;
+  yaw_max_error_publisher_->publish(value);
 }
 
 void EvaluationNode::appendPose(
