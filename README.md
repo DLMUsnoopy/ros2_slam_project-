@@ -205,3 +205,13 @@ This project was developed as a team project at the University of Bonn, focusing
 | **Sirui Hu** | ArUco marker detection, A*/RRT path planning, frontier exploration, and obstacle-aware replanning. |
 | **Xicheng Meng** | Bresenham ray casting, LiDAR scan-to-map localization, SLAM evaluation, and loop-closure improvements. |
 | **Yan Wang** | Pose transformations, ArUco localization integration, ICP data association, and EKF-SLAM integration. |
+
+Supervision & Acknowledgements
+
+This project was carried out at the University of Bonn under the supervision and academic guidance of:
+
+Giulia Nardini – Project Supervisor
+
+Prof. Dr. Cyrill Stachniss – Professor, University of Bonn
+
+We would like to thank them for their guidance and support throughout the project.
