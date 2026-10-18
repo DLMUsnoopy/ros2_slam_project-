@@ -1,4 +1,13 @@
 # IPB ROS2 Gazebo Simulation
+## Demo Video
+
+Demonstration of the ROS 2 Jazzy robotic simulation
+environment using Gazebo and RViz.
+
+
+
+https://github.com/user-attachments/assets/f1b96a07-fc6f-4c7b-b6d6-e6a02e195677
+
 
 ## Simulation
 
@@ -181,3 +190,18 @@ It:
 - installs Git hooks so LFS works automatically
 - only needs to be run once per user/machine
 - defined in .gitattributes
+
+
+
+
+## Team Contributions
+
+This project was developed as a team project at the University of Bonn, focusing on ROS 2-based autonomous navigation, LiDAR SLAM, motion planning, and robot control.
+
+| Team Member | Main Contributions |
+|---|---|
+| **Suvrat Tembe** | ROS 2 setup, TF transformations, PD/NMPC control, LiDAR-based obstacle avoidance, and dynamic actor simulation. |
+| **Jiaju Xie** | Occupancy grid mapping, LiDAR-based likelihood-field SLAM, SLAM optimization, and integration of the ROS 2 navigation pipeline. |
+| **Sirui Hu** | ArUco marker detection, A*/RRT path planning, frontier exploration, and obstacle-aware replanning. |
+| **Xicheng Meng** | Bresenham ray casting, LiDAR scan-to-map localization, SLAM evaluation, and loop-closure improvements. |
+| **Yan Wang** | Pose transformations, ArUco localization integration, ICP data association, and EKF-SLAM integration. |
